@@ -2,7 +2,7 @@ export interface Transaction {
   id: string;
   title: string;
   amount: number;
-  type: 'inflow' | 'outflow';
+  type: 'inflow' | 'outflow' | 'transfer'; 
   category: string;
   date: string;
 }

@@ -37,13 +37,24 @@ export const SummaryCard: React.FC<Props> = ({ netWorthTotal, safeSpendRemaining
 };
 
 const styles = StyleSheet.create({
-  summaryCard: { backgroundColor: '#0f172a', marginHorizontal: 20, marginTop: 8, marginBottom: 16, padding: 20, borderRadius: 16 },
+  summaryCard: {
+    backgroundColor: '#0f172a',
+    marginHorizontal: 20,
+    marginTop: 8,
+    marginBottom: 16,
+    padding: 20,
+    borderRadius: 20,
+    // Accent Border
+    borderWidth: 1,
+    borderColor: '#1e293b',
+    elevation: 4,
+  },
   cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  summaryLabel: { color: '#94a3b8', fontSize: 12 },
-  netWorthValue: { color: '#ffffff', fontSize: 26, fontWeight: 'bold', marginTop: 4 },
-  cardDivider: { height: 1, backgroundColor: '#334155', marginVertical: 14 },
+  summaryLabel: { color: '#94a3b8', fontSize: 12, fontWeight: '500' },
+  netWorthValue: { color: '#ffffff', fontSize: 28, fontWeight: 'bold', marginTop: 6, letterSpacing: -0.5 },
+  cardDivider: { height: 1, backgroundColor: '#1e293b', marginVertical: 16 },
   safeSpendRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
   safeSpendLabel: { color: '#cbd5e1', fontSize: 12 },
-  safeSpendValue: { fontSize: 18, fontWeight: 'bold', marginTop: 2 },
-  safeSpendSubtext: { color: '#64748b', fontSize: 11 },
+  safeSpendValue: { fontSize: 20, fontWeight: 'bold', marginTop: 2 },
+  safeSpendSubtext: { color: '#64748b', fontSize: 11, fontWeight: '500' },
 });

@@ -68,6 +68,7 @@ export const AppModals: React.FC<Props> = ({
             </View>
             <TextInput style={styles.input} placeholder="Keterangan (misal: Makan Siang)" value={transTitle} onChangeText={setTransTitle} />
             <TextInput style={styles.input} placeholder="Nominal (misal: 25000)" keyboardType="numeric" value={transAmount} onChangeText={setTransAmount} />
+            <TextInput style={styles.input} placeholder ="Nominal Transfer 10000000" keyboardType="numeric" value={transAmount} onChangeText={setTransAmount} />
             <View style={styles.modalActions}>
               <Pressable style={styles.cancelButton} onPress={onClose}><Text style={styles.cancelText}>Batal</Text></Pressable>
               <Pressable style={styles.submitButton} onPress={() => {
@@ -77,7 +78,7 @@ export const AppModals: React.FC<Props> = ({
                   title: transTitle,
                   amount: parseFloat(transAmount) || 0,
                   type: transType,
-                  category: transType === 'inflow' ? 'Pemasukan' : 'Pengeluaran',
+                  category: transType === 'inflow' ? 'Pemasukan' : transType === 'outflow' ? 'Pengeluaran' : 'Transfer',
                   date: 'Hari ini',
                 });
                 setTransTitle(''); setTransAmount(''); onClose();
@@ -122,20 +123,47 @@ export const AppModals: React.FC<Props> = ({
 };
 
 const styles = StyleSheet.create({
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'flex-end' },
-  modalContent: { backgroundColor: 'white', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24 },
-  modalTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 16, color: '#0f172a' },
-  inputLabel: { fontSize: 12, color: '#64748b', marginBottom: 4 },
-  typeSelector: { flexDirection: 'row', gap: 12, marginBottom: 16 },
-  typeButton: { flex: 1, paddingVertical: 10, borderRadius: 8, borderWidth: 1, borderColor: '#cbd5e1', alignItems: 'center' },
-  typeButtonOutflow: { backgroundColor: '#fee2e2', borderColor: '#ef4444' },
-  typeButtonInflow: { backgroundColor: '#dcfce7', borderColor: '#22c55e' },
-  typeText: { fontSize: 13, color: '#64748b' },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.65)', // Masking lebih gelap
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#ffffff',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    padding: 24,
+    paddingBottom: 36,
+  },
+  modalTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 18, color: '#0f172a' },
+  inputLabel: { fontSize: 12, fontWeight: '600', color: '#475569', marginBottom: 6 },
+  typeSelector: { flexDirection: 'row', gap: 10, marginBottom: 16 },
+  typeButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: '#e2e8f0',
+    alignItems: 'center',
+  },
+  typeButtonOutflow: { backgroundColor: '#fef2f2', borderColor: '#ef4444' },
+  typeButtonInflow: { backgroundColor: '#f0fdf4', borderColor: '#22c55e' },
+  typeText: { fontSize: 13, color: '#64748b', fontWeight: '500' },
   typeTextActive: { fontWeight: 'bold', color: '#0f172a' },
-  input: { backgroundColor: '#f8fafc', borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 10, padding: 12, marginBottom: 12, fontSize: 14 },
-  modalActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 12, marginTop: 8 },
-  cancelButton: { paddingVertical: 10, paddingHorizontal: 16 },
-  cancelText: { color: '#64748b' },
-  submitButton: { backgroundColor: '#0f172a', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 8 },
+  input: {
+    backgroundColor: '#f8fafc',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 14,
+    fontSize: 14,
+    color: '#0f172a',
+  },
+  modalActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 12, marginTop: 10 },
+  cancelButton: { paddingVertical: 12, paddingHorizontal: 18, borderRadius: 10 },
+  cancelText: { color: '#64748b', fontWeight: '600' },
+  submitButton: { backgroundColor: '#0f172a', paddingVertical: 12, paddingHorizontal: 24, borderRadius: 10 },
   submitText: { color: 'white', fontWeight: 'bold' },
 });
