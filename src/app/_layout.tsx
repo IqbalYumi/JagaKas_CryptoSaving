@@ -13,9 +13,12 @@ export default function RootLayout() {
         <Stack.Screen name="index" />
         <Stack.Screen
           name="add-transaction"
-          options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
-        />
-      </Stack>
+          options={{ presentation: 'modal', animation: 'slide_from_bottom' }}/>
+        <Stack.Screen
+          name="Setting"
+          options={{ presentation: 'modal', animation: 'slide_from_bottom' }}/>
+          
+          </Stack>
     </FinanceProvider>
   );
 }

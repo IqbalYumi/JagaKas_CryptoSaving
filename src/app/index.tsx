@@ -56,7 +56,7 @@ export default function DashboardScreen() {
           netWorthTotal={netWorthTotal}
           safeSpendRemaining={safeSpendRemaining}
           dailyLimit={dailyLimit}
-          onPressSettings={() => router.push('/add-transaction' as any)}
+          onPressSettings={() => router.push('/Setting' as any)}
         />
 
         {/* KARTU PEMASUKAN & PENGELUARAN */}
