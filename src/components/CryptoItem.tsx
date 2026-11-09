@@ -1,33 +1,67 @@
 import { CryptoAsset } from '@/types';
 import { formatRupiah } from '@/utils/formatters';
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { CryptoChart } from './CryptoChart';
 
 export const CryptoItem: React.FC<{ asset: CryptoAsset }> = ({ asset }) => {
-  const assetTotalIdr = asset.amount * asset.priceIdr;
+  const [showChart, setShowChart] = useState<boolean>(false);
+
+  const totalValue = asset.amount * asset.priceIdr;
+  const coinId = asset.name.toLowerCase();
+
   return (
-    <View style={styles.itemCard}>
-      <View style={[styles.iconCircle, { backgroundColor: '#f1f5f9' }]}>
-        <Ionicons name="analytics-outline" size={20} color="#0284c7" />
-      </View>
-      <View style={styles.itemDetails}>
-        <Text style={styles.itemTitle}>{asset.name} ({asset.symbol})</Text>
-        <Text style={styles.itemSubtext}>Jumlah: {asset.amount} {asset.symbol}</Text>
-      </View>
-      <View style={{ alignItems: 'flex-end' }}>
-        <Text style={styles.itemAmount}>{formatRupiah(assetTotalIdr)}</Text>
-        <Text style={styles.itemSubtext}>@ {formatRupiah(asset.priceIdr)}</Text>
-      </View>
+    <View style={styles.container}>
+      <Pressable style={styles.itemCard} onPress={() => setShowChart((prev) => !prev)}>
+        <View style={styles.iconCircle}>
+          <Ionicons name="logo-bitcoin" size={22} color="#f59e0b" />
+        </View>
+
+        <View style={styles.itemDetails}>
+          <Text style={styles.itemTitle}>{asset.name}</Text>
+          <Text style={styles.itemSubtext}>
+            {asset.amount} {asset.symbol} • {formatRupiah(asset.priceIdr)}/coin
+          </Text>
+        </View>
+
+        <View style={{ alignItems: 'flex-end' }}>
+          <Text style={styles.totalValueText}>{formatRupiah(totalValue)}</Text>
+          <View style={styles.chartToggleBadge}>
+            <Text style={styles.chartToggleText}>{showChart ? 'Sembunyikan' : 'Lihat Grafik'}</Text>
+            <Ionicons name={showChart ? 'chevron-up' : 'chevron-down'} size={12} color="#0284c7" />
+          </View>
+        </View>
+      </Pressable>
+
+      {/* EXPANDABLE GRAFIK API */}
+      {showChart && (
+        <View style={styles.chartWrapper}>
+          <CryptoChart coinId={coinId} symbol={asset.symbol} name={asset.name} />
+        </View>
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  itemCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#ffffff', padding: 14, borderRadius: 12, marginBottom: 10, borderWidth: 1, borderColor: '#f1f5f9' },
-  iconCircle: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+  container: { marginBottom: 10 },
+  itemCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
+    elevation: 2,
+  },
+  iconCircle: { width: 42, height: 42, borderRadius: 21, backgroundColor: '#fffbebfb', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
   itemDetails: { flex: 1 },
-  itemTitle: { fontSize: 14, fontWeight: '600', color: '#0f172a' },
-  itemSubtext: { fontSize: 12, color: '#64748b', marginTop: 2 },
-  itemAmount: { fontSize: 14, fontWeight: 'bold', color: '#0f172a' },
+  itemTitle: { fontSize: 14, fontWeight: 'bold', color: '#0f172a' },
+  itemSubtext: { fontSize: 11, color: '#64748b', marginTop: 2 },
+  totalValueText: { fontSize: 14, fontWeight: 'bold', color: '#0f172a' },
+  chartToggleBadge: { flexDirection: 'row', alignItems: 'center', gap: 2, marginTop: 4 },
+  chartToggleText: { fontSize: 10, fontWeight: 'bold', color: '#0284c7' },
+  chartWrapper: { marginTop: 8 },
 });

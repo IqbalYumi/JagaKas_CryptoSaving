@@ -13,12 +13,14 @@ export default function RootLayout() {
         <Stack.Screen name="index" />
         <Stack.Screen
           name="add-transaction"
-          options={{ presentation: 'modal', animation: 'slide_from_bottom' }}/>
+          options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+        />
+        {/* Rute Settings */}
         <Stack.Screen
-          name="Setting"
-          options={{ presentation: 'modal', animation: 'slide_from_bottom' }}/>
-          
-          </Stack>
+          name="settings"
+          options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+        />
+      </Stack>
     </FinanceProvider>
   );
 }

@@ -15,7 +15,13 @@ export const SummaryCard: React.FC<Props> = ({ netWorthTotal, safeSpendRemaining
     <View style={styles.summaryCard}>
       <View style={styles.cardHeaderRow}>
         <Text style={styles.summaryLabel}>Total Kekayaan (Kas + Crypto)</Text>
-        <Pressable onPress={onPressSettings}>
+        
+        {/* Tambahkan hitSlop & padding agar area tekan lebih luas di HP */}
+        <Pressable 
+          onPress={onPressSettings} 
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          style={styles.settingsButton}
+        >
           <Ionicons name="settings-outline" size={18} color="#94a3b8" />
         </Pressable>
       </View>
@@ -44,12 +50,12 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     padding: 20,
     borderRadius: 20,
-    // Accent Border
     borderWidth: 1,
     borderColor: '#1e293b',
     elevation: 4,
   },
   cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  settingsButton: { padding: 4, borderRadius: 6 }, // Area tombol sentuh
   summaryLabel: { color: '#94a3b8', fontSize: 12, fontWeight: '500' },
   netWorthValue: { color: '#ffffff', fontSize: 28, fontWeight: 'bold', marginTop: 6, letterSpacing: -0.5 },
   cardDivider: { height: 1, backgroundColor: '#1e293b', marginVertical: 16 },
