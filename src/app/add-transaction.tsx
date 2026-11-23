@@ -29,15 +29,38 @@ const CRYPTO_TOKENS = [
   { symbol: 'USDT', name: 'Tether' },
 ];
 
+const getDateOffsetKey = (daysOffset: number): string => {
+  const d = new Date();
+  d.setDate(d.getDate() + daysOffset);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const buildIsoFromDateKey = (dateKey: string): string | null => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) return null;
+  const [year, month, day] = dateKey.split('-').map(Number);
+  const now = new Date();
+  const parsed = new Date(year, month - 1, day, now.getHours(), now.getMinutes(), now.getSeconds());
+  if (isNaN(parsed.getTime())) return null;
+  return parsed.toISOString();
+};
+
 export default function AddTransactionScreen() {
   const router = useRouter();
   const { addTransaction, isDarkMode } = useFinance();
+
+  const todayKey = getDateOffsetKey(0);
+  const yesterdayKey = getDateOffsetKey(-1);
 
   const [assetType, setAssetType] = useState<'cash' | 'crypto'>('cash');
   const [type, setType] = useState<'inflow' | 'outflow'>('outflow');
   const [title, setTitle] = useState('');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('Kuliner');
+  const [transactionDate, setTransactionDate] = useState<string>(todayKey);
+  const [isSaving, setIsSaving] = useState(false);
 
   // State khusus Crypto & Live Price API
   const [selectedCrypto, setSelectedCrypto] = useState('BTC');
@@ -50,7 +73,6 @@ export default function AddTransactionScreen() {
     USDT: 16000,
   });
 
-  // 1. Fetch Harga Live dari API saat beralih ke tab Crypto
   useEffect(() => {
     if (assetType === 'crypto') {
       loadLivePrices();
@@ -66,14 +88,13 @@ export default function AddTransactionScreen() {
         priceMap[p.symbol.toUpperCase()] = p.priceIdr;
       });
       setLivePrices((prev) => ({ ...prev, ...priceMap }));
-    } catch (err) {
+    } catch {
       console.log('Menggunakan harga estimasi fallback lokal.');
     } finally {
       setLoadingPrice(false);
     }
   };
 
-  // 2. Auto-Kalkulasi Total Nilai (Rp) saat Jumlah Coin Berubah
   const handleCryptoAmountChange = (text: string) => {
     setCryptoAmount(text);
     const parsedQty = parseFloat(text);
@@ -87,7 +108,6 @@ export default function AddTransactionScreen() {
     }
   };
 
-  // 3. Auto-Kalkulasi Ulang saat Pindah Pilihan Token
   const handleSelectToken = (symbol: string) => {
     setSelectedCrypto(symbol);
     const parsedQty = parseFloat(cryptoAmount);
@@ -112,12 +132,12 @@ export default function AddTransactionScreen() {
     setAmount((cleanCurrent + addValue).toString());
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const cleanAmountStr = amount.replace(/[^0-9]/g, '');
     const numericAmount = parseInt(cleanAmountStr, 10);
 
-    const defaultTitle = assetType === 'crypto' 
-      ? `${type === 'inflow' ? 'Beli' : 'Jual'} ${selectedCrypto}` 
+    const defaultTitle = assetType === 'crypto'
+      ? `${type === 'inflow' ? 'Beli' : 'Jual'} ${selectedCrypto}`
       : title;
 
     if (assetType === 'cash' && !title.trim()) {
@@ -138,17 +158,28 @@ export default function AddTransactionScreen() {
       }
     }
 
-    addTransaction({
-      title: defaultTitle.trim(),
-      amount: numericAmount,
-      type,
-      category,
-      assetType,
-      cryptoSymbol: selectedCrypto,
-      cryptoAmount: assetType === 'crypto' ? parseFloat(cryptoAmount) : undefined,
-    });
+    const isoTimestamp = buildIsoFromDateKey(transactionDate.trim());
+    if (!isoTimestamp) {
+      Alert.alert('Format Tanggal Salah', 'Gunakan format YYYY-MM-DD (contoh: 2026-11-23).');
+      return;
+    }
 
-    handleGoBack();
+    try {
+      setIsSaving(true);
+      await addTransaction({
+        title: defaultTitle.trim(),
+        amount: numericAmount,
+        type,
+        category,
+        assetType,
+        cryptoSymbol: selectedCrypto,
+        cryptoAmount: assetType === 'crypto' ? parseFloat(cryptoAmount) : undefined,
+        transactionDate: isoTimestamp,
+      });
+      handleGoBack();
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const categories = type === 'outflow' ? OUTFLOW_CATEGORIES : INFLOW_CATEGORIES;
@@ -166,7 +197,6 @@ export default function AddTransactionScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.formContent} showsVerticalScrollIndicator={false}>
-        
         {/* PILIHAN DOMPET: KAS vs CRYPTO */}
         <Text style={[styles.label, isDarkMode && { color: '#cbd5e1' }]}>Pilih Dompet / Akun</Text>
         <View style={styles.walletSelectorContainer}>
@@ -210,7 +240,7 @@ export default function AddTransactionScreen() {
           </Pressable>
         </View>
 
-        {/* SEKSI KHUSUS CRYPTO WITH LIVE PRICE AUTO-CALCULATE */}
+        {/* SEKSI KHUSUS CRYPTO */}
         {assetType === 'crypto' && (
           <View style={[styles.cryptoSection, isDarkMode && { backgroundColor: '#1e293b', borderColor: '#334155' }]}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
@@ -232,7 +262,6 @@ export default function AddTransactionScreen() {
               ))}
             </View>
 
-            {/* HARGA LIVE BADGE */}
             <View style={styles.livePriceBadge}>
               <Ionicons name="stats-chart-outline" size={14} color="#d97706" />
               <Text style={styles.livePriceText}>
@@ -240,7 +269,6 @@ export default function AddTransactionScreen() {
               </Text>
             </View>
 
-            {/* INPUT JUMLAH COIN */}
             <View style={styles.inputGroup}>
               <Text style={[styles.label, isDarkMode && { color: '#cbd5e1' }]}>Jumlah Coin ({selectedCrypto})</Text>
               <View style={[styles.amountInputRow, isDarkMode && { backgroundColor: '#0f172a', borderColor: '#475569' }]}>
@@ -258,7 +286,7 @@ export default function AddTransactionScreen() {
           </View>
         )}
 
-        {/* INPUT TOTAL NILAI RUPIAH (OTOMATIS TERISI DARI HARGA LIVE) */}
+        {/* INPUT TOTAL NILAI RUPIAH */}
         <View style={styles.inputGroup}>
           <Text style={[styles.label, isDarkMode && { color: '#cbd5e1' }]}>
             {assetType === 'crypto' ? 'Total Nilai Aset Terhitung (Rp)' : 'Nominal Transaksi (Rp)'}
@@ -318,6 +346,43 @@ export default function AddTransactionScreen() {
           </View>
         )}
 
+        {/* TANGGAL TRANSAKSI HISTORIS */}
+        <View style={styles.inputGroup}>
+          <Text style={[styles.label, isDarkMode && { color: '#cbd5e1' }]}>Tanggal Transaksi</Text>
+
+          <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
+            <Pressable
+              style={[styles.dateChip, transactionDate === todayKey && styles.dateChipActive]}
+              onPress={() => setTransactionDate(todayKey)}
+            >
+              <Text style={[styles.dateChipText, transactionDate === todayKey && styles.dateChipTextActive]}>
+                Hari Ini
+              </Text>
+            </Pressable>
+
+            <Pressable
+              style={[styles.dateChip, transactionDate === yesterdayKey && styles.dateChipActive]}
+              onPress={() => setTransactionDate(yesterdayKey)}
+            >
+              <Text style={[styles.dateChipText, transactionDate === yesterdayKey && styles.dateChipTextActive]}>
+                Kemarin
+              </Text>
+            </Pressable>
+          </View>
+
+          <View style={[styles.textInputWrapper, isDarkMode && { backgroundColor: '#1e293b', borderColor: '#334155' }]}>
+            <Ionicons name="calendar-outline" size={20} color="#94a3b8" style={{ marginRight: 8 }} />
+            <TextInput
+              style={[styles.textInput, isDarkMode && { color: '#ffffff' }]}
+              placeholder="YYYY-MM-DD (Contoh: 2026-11-23)"
+              placeholderTextColor="#94a3b8"
+              value={transactionDate}
+              onChangeText={setTransactionDate}
+              maxLength={10}
+            />
+          </View>
+        </View>
+
         {/* KETERANGAN TRANSAKSI */}
         <View style={styles.inputGroup}>
           <Text style={[styles.label, isDarkMode && { color: '#cbd5e1' }]}>Keterangan / Catatan</Text>
@@ -335,15 +400,22 @@ export default function AddTransactionScreen() {
 
         {/* TOMBOL AKSI */}
         <View style={styles.actions}>
-          <Pressable style={styles.cancelButton} onPress={handleGoBack}>
+          <Pressable style={styles.cancelButton} onPress={handleGoBack} disabled={isSaving}>
             <Text style={styles.cancelText}>Batal</Text>
           </Pressable>
           <Pressable
-            style={[styles.submitButton, type === 'inflow' ? styles.submitInflow : styles.submitOutflow]}
+            style={[styles.submitButton, type === 'inflow' ? styles.submitInflow : styles.submitOutflow, isSaving && { opacity: 0.7 }]}
             onPress={handleSave}
+            disabled={isSaving}
           >
-            <Ionicons name="checkmark-sharp" size={20} color="white" style={{ marginRight: 6 }} />
-            <Text style={styles.submitText}>Simpan Transaksi</Text>
+            {isSaving ? (
+              <ActivityIndicator size="small" color="#ffffff" />
+            ) : (
+              <>
+                <Ionicons name="checkmark-sharp" size={20} color="white" style={{ marginRight: 6 }} />
+                <Text style={styles.submitText}>Simpan Transaksi</Text>
+              </>
+            )}
           </Pressable>
         </View>
       </ScrollView>
@@ -380,7 +452,7 @@ const styles = StyleSheet.create({
   typeTextOutflow: { color: '#dc2626' },
   typeTextInflow: { color: '#16a34a' },
 
-  cryptoSection: { marginBottom: 16, backgroundColor: '#fffbebfb', padding: 14, borderRadius: 14, borderWidth: 1, borderColor: '#fef3c7' },
+  cryptoSection: { marginBottom: 16, backgroundColor: '#fffbeb', padding: 14, borderRadius: 14, borderWidth: 1, borderColor: '#fef3c7' },
   tokenRow: { flexDirection: 'row', gap: 8, marginBottom: 10 },
   tokenChip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 10, backgroundColor: '#ffffff', borderWidth: 1, borderColor: '#fde68a' },
   tokenChipSelected: { backgroundColor: '#f59e0b', borderColor: '#f59e0b' },
@@ -399,6 +471,11 @@ const styles = StyleSheet.create({
   quickAmountRow: { flexDirection: 'row', gap: 8, marginBottom: 20 },
   quickChip: { flex: 1, backgroundColor: '#f1f5f9', paddingVertical: 8, borderRadius: 8, alignItems: 'center' },
   quickChipText: { fontSize: 12, fontWeight: '600', color: '#475569' },
+
+  dateChip: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 8, backgroundColor: '#f1f5f9' },
+  dateChipActive: { backgroundColor: '#0f172a' },
+  dateChipText: { fontSize: 12, fontWeight: '600', color: '#64748b' },
+  dateChipTextActive: { color: '#ffffff' },
 
   categoryContainer: { gap: 8, paddingVertical: 2 },
   categoryChip: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f8fafc', borderWidth: 1, borderColor: '#e2e8f0', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, gap: 6 },

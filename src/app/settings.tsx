@@ -1,12 +1,14 @@
+import { useAuth } from '@/context/AuthContext';
 import { useFinance } from '@/context/FinanceContext';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const { user, signOut } = useAuth();
   const { 
     cashBalance, 
     dailyLimit, 
@@ -20,6 +22,7 @@ export default function SettingsScreen() {
 
   const [balanceInput, setBalanceInput] = useState(cashBalance.toString());
   const [limitInput, setLimitInput] = useState(dailyLimit.toString());
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   const themeContainerStyle = isDarkMode ? styles.darkContainer : styles.lightContainer;
   const themeCardStyle = isDarkMode ? styles.darkCard : styles.lightCard;
@@ -65,6 +68,31 @@ export default function SettingsScreen() {
             resetData();
             Alert.alert('Selesai', 'Seluruh data transaksi berhasil direset.');
           } 
+        },
+      ]
+    );
+  };
+
+  const handleSignOutConfirm = () => {
+    Alert.alert(
+      'Keluar Akun',
+      'Apakah Anda yakin ingin keluar dari akun JagaKas?',
+      [
+        { text: 'Batal', style: 'cancel' },
+        {
+          text: 'Keluar',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setIsSigningOut(true);
+              await signOut();
+              // RouteGuard di _layout.tsx otomatis mengarahkan ke halaman /login
+            } catch (error: any) {
+              Alert.alert('Gagal Keluar', error?.message || 'Terjadi kesalahan saat keluar akun.');
+            } finally {
+              setIsSigningOut(false);
+            }
+          },
         },
       ]
     );
@@ -162,21 +190,68 @@ export default function SettingsScreen() {
           </Pressable>
         </View>
 
-        {/* SEKSI 3: MANAJEMEN DATA & APLIKASI */}
+        {/* SEKSI 3: SISTEM & AKUN (PROFIL SUPABASE + RESET + SIGN OUT) */}
         <Text style={[styles.sectionTitle, { color: themeSubtextColor }]}>SISTEM & AKUN</Text>
 
         <View style={[styles.settingCard, themeCardStyle]}>
+          {/* Info Akun Terhubung */}
+          <View style={styles.rowItem}>
+            <View style={styles.rowLeft}>
+              <View style={[styles.iconBadge, { backgroundColor: '#e0f2fe' }]}>
+                <Ionicons name="person-outline" size={20} color="#0284c7" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.rowTitle, { color: themeTextColor }]} numberOfLines={1}>
+                  {user?.email || 'Pengguna JagaKas'}
+                </Text>
+                <Text style={[styles.rowSubtext, { color: themeSubtextColor }]}>
+                  Sesi aktif tersimpan aman
+                </Text>
+              </View>
+            </View>
+            <View style={styles.activeBadge}>
+              <Text style={styles.activeBadgeText}>Aktif</Text>
+            </View>
+          </View>
+
+          <View style={[styles.divider, { backgroundColor: isDarkMode ? '#334155' : '#f1f5f9' }]} />
+
+          {/* Reset Transaksi */}
           <Pressable style={styles.dangerRow} onPress={handleResetConfirm}>
             <View style={styles.rowLeft}>
-              <View style={[styles.iconBadge, { backgroundColor: '#fee2e2' }]}>
-                <Ionicons name="trash-outline" size={20} color="#dc2626" />
+              <View style={[styles.iconBadge, { backgroundColor: '#fef3c7' }]}>
+                <Ionicons name="trash-outline" size={20} color="#d97706" />
               </View>
               <View>
-                <Text style={styles.dangerTitle}>Reset Seluruh Transaksi</Text>
+                <Text style={[styles.rowTitle, { color: '#d97706' }]}>Reset Seluruh Transaksi</Text>
                 <Text style={[styles.rowSubtext, { color: themeSubtextColor }]}>Kosongkan riwayat kas & saldo</Text>
               </View>
             </View>
-            <Ionicons name="chevron-forward" size={18} color="#dc2626" />
+            <Ionicons name="chevron-forward" size={18} color="#d97706" />
+          </Pressable>
+
+          <View style={[styles.divider, { backgroundColor: isDarkMode ? '#334155' : '#f1f5f9' }]} />
+
+          {/* Tombol Sign Out */}
+          <Pressable
+            style={[styles.dangerRow, isSigningOut && { opacity: 0.6 }]}
+            onPress={handleSignOutConfirm}
+            disabled={isSigningOut}
+          >
+            <View style={styles.rowLeft}>
+              <View style={[styles.iconBadge, { backgroundColor: '#fee2e2' }]}>
+                <Ionicons name="log-out-outline" size={20} color="#dc2626" />
+              </View>
+              <View>
+                <Text style={styles.dangerTitle}>Keluar Akun (Sign Out)</Text>
+                <Text style={[styles.rowSubtext, { color: themeSubtextColor }]}>Akhiri sesi & hapus token lokal</Text>
+              </View>
+            </View>
+            {isSigningOut ? (
+              <ActivityIndicator size="small" color="#dc2626" />
+            ) : (
+              <Ionicons name="chevron-forward" size={18} color="#dc2626" />
+            )}
           </Pressable>
         </View>
 
@@ -214,6 +289,18 @@ const styles = StyleSheet.create({
   rowTitle: { fontSize: 14, fontWeight: '600' },
   rowSubtext: { fontSize: 12, marginTop: 2 },
   divider: { height: 1, marginVertical: 14 },
+
+  activeBadge: {
+    backgroundColor: '#dcfce7',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  activeBadgeText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: '#15803d',
+  },
 
   inputGroup: { marginBottom: 14 },
   inputLabel: { fontSize: 12, fontWeight: '600', marginBottom: 6 },

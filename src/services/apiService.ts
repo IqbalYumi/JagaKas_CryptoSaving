@@ -29,6 +29,11 @@ export interface CryptoHistoryData {
   changePercentage: number;
 }
 
+export interface nameEmail {
+  name: string;
+  email: string;
+}
+
 // ============================================================================
 // 2. CUSTOM & PRE-BUILT ASYNC FUNCTION (Kriteria 2 - 10%)
 // ============================================================================
@@ -171,3 +176,13 @@ export const processTransactionWithThen = (title: string, amount: number) => {
       return Promise.reject({ success: false, message: errorMessage });
     });
 };
+
+export const NameEmail = async (name : String, email : String)  => {
+  const respones = await fetch(
+  'https://jsonplaceholder.typicode.com/users'
+);
+
+
+};
+
+ 

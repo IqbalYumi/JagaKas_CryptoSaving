@@ -2,17 +2,16 @@ export interface Transaction {
   id: string;
   title: string;
   amount: number;
-  type: 'inflow' | 'outflow' | 'transfer'; 
+  type: 'inflow' | 'outflow';
   category: string;
-  date: string;
+  date: string;     // Format tampilan: "23 Nov 2026 • 22:26"
+  dateKey: string;  // Format filter historis: "2026-11-23"
 }
 
 export interface CryptoAsset {
   id: string;
-  name: string;
   symbol: string;
+  name: string;
   amount: number;
   priceIdr: number;
 }
-
-export type ModalType = 'none' | 'setup' | 'transaction' | 'crypto';
